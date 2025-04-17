@@ -39,3 +39,5 @@ router.post("/generate-flashcards", async (req, res) => {
     });
   }
 });
+
+export default router;
