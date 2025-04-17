@@ -1,6 +1,6 @@
 import express from "express";
 import multer from "multer";
-import pdfParse from "pdf-parse";
+import { default as pdfParse } from "pdf-parse/lib/pdf-parse.js";
 import mammoth from "mammoth";
 import fs from "fs";
 import { GoogleGenAI } from "@google/genai";
