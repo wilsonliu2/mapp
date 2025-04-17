@@ -1,4 +1,3 @@
-// routes/aiRoutes.js
 import express from "express";
 import { GoogleGenAI } from "@google/genai";
 
@@ -21,12 +20,13 @@ TEXT:
 ${text}
     `;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-1.5-pro", // or "gemini-pro"
+    const result = await ai.models.generateContent({
+      model: "gemini-1.5-pro",
       contents: [{ role: "user", parts: [{ text: prompt }] }],
     });
 
-    const output = await response.text();
+    const output =
+      result.candidates[0]?.content?.parts?.[0]?.text || "No content returned.";
 
     res.json({ result: output });
   } catch (err) {
