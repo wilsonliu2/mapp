@@ -4,7 +4,8 @@ import job from "./lib/cron.js";
 import authRoutes from "./routes/authRoutes.js";
 import { connectDB } from "./lib/db.js";
 import bookRoutes from "./routes/bookRoutes.js";
-import aiRoutes from "./routes/aiRoutes.js";
+import uploadAiRoute from "./routes/uploadAiRoute.js";
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -13,7 +14,7 @@ app.use(express.json());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/books", bookRoutes);
-app.use("/api/ai", aiRoutes);
+app.use("/api/upload", uploadAiRoute);
 
 app.listen(PORT, () => {
   console.log(`server is running on port ${PORT}`);
