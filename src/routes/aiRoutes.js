@@ -12,7 +12,13 @@ router.post("/generate-flashcards", async (req, res) => {
       return res.status(400).json({ error: "Text input is too short" });
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const model = genAI.getGenerativeModel({
+      model: "gemini-pro",
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 1024,
+      },
+    });
 
     const prompt = `
   You are an expert tutor.
