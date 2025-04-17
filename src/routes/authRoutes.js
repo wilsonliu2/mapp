@@ -20,10 +20,10 @@ router.post("/register", async (req, res) => {
     }
 
     // Check password length
-    if (password.length < 6) {
+    if (password.length < 8) {
       return res
         .status(400)
-        .json({ message: "password should be 6 chars long" });
+        .json({ message: "password should be 8 chars long" });
     }
 
     // Check username length
