@@ -1,16 +1,13 @@
+// routes/aiRoutes.js
 import express from "express";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 
 const router = express.Router();
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 router.post("/generate-flashcards", async (req, res) => {
   try {
     const { text, count = 10 } = req.body;
-
-    const model = genAI.getGenerativeModel({
-      model: "models/gemini-pro",
-    });
 
     const prompt = `
 You are an expert tutor.
@@ -24,9 +21,12 @@ TEXT:
 ${text}
     `;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const output = response.text();
+    const response = await ai.models.generateContent({
+      model: "gemini-1.5-pro", // or "gemini-pro"
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+    });
+
+    const output = await response.text();
 
     res.json({ result: output });
   } catch (err) {
