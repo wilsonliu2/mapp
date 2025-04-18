@@ -1,31 +1,67 @@
-import fs from "fs";
-import { GoogleGenAI } from "@google/genai";
+import express from "express";
 import multer from "multer";
+import fs from "fs";
 import { default as pdfParse } from "pdf-parse/lib/pdf-parse.js";
 import mammoth from "mammoth";
-import express from "express";
+import { GoogleGenAI } from "@google/genai";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
 
-router.post("/upload-ai", upload.single("file"), async (req, res) => {
+router.post("/generate-flashcards", async (req, res) => {
+  const { text, count = 10 } = req.body;
+
+  if (!text) {
+    return res.status(400).json({ error: "Text is required" });
+  }
+
+  try {
+    const prompt = `
+You are a tutor AI.
+Summarize the following notes in 3 bullet points.
+Then generate ${count} flashcards in the format:
+
+Q: question
+A: answer
+
+TEXT:
+${text}
+    `;
+
+    const result = await ai.models.generateContent({
+      model: "gemini-1.5-pro",
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+    });
+
+    const output =
+      result.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
+
+    return res.json({ result: output });
+  } catch (err) {
+    console.error("Text AI generation error:", err);
+    res
+      .status(500)
+      .json({ error: "AI generation failed", details: err.message });
+  }
+});
+
+router.post("/upload-ai-image", upload.single("file"), async (req, res) => {
   const file = req.file;
-  const { count = 2 } = req.body;
+  const { count = 10 } = req.body;
 
   if (!file) return res.status(400).json({ error: "No file uploaded" });
 
   try {
     let text = "";
 
-    // ✅ Handle PDF
+    // Handle PDF
     if (file.mimetype === "application/pdf") {
       const buffer = fs.readFileSync(file.path);
       const data = await pdfParse(buffer);
       text = data.text;
     }
-
-    // ✅ Handle DOCX
+    // Handle DOCX
     else if (
       file.mimetype ===
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
@@ -34,8 +70,7 @@ router.post("/upload-ai", upload.single("file"), async (req, res) => {
       const result = await mammoth.extractRawText({ buffer });
       text = result.value;
     }
-
-    // ✅ Handle Image (JPEG/PNG)
+    // Handle image
     else if (file.mimetype === "image/jpeg" || file.mimetype === "image/png") {
       const base64 = fs.readFileSync(file.path, { encoding: "base64" });
 
@@ -62,18 +97,13 @@ router.post("/upload-ai", upload.single("file"), async (req, res) => {
       const output =
         result.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
 
-      fs.unlinkSync(file.path); // Clean up
-
+      fs.unlinkSync(file.path);
       return res.json({ result: output });
-    }
-
-    // ❌ Not a supported type
-    else {
+    } else {
       fs.unlinkSync(file.path);
       return res.status(400).json({ error: "Unsupported file type" });
     }
 
-    // If it's PDF or DOCX, send this prompt
     const prompt = `
 You are a tutor AI.
 Summarize the following notes in 3 bullet points.
@@ -94,8 +124,7 @@ ${text}
     const output =
       result.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
 
-    fs.unlinkSync(file.path); // Clean up
-
+    fs.unlinkSync(file.path);
     res.json({ result: output });
   } catch (err) {
     console.error("Upload AI error:", err);
